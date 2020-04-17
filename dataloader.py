@@ -6,6 +6,8 @@ from skimage import io, transform
 import numpy as np
 import matplotlib.pyplot as plt
 from torch.utils.data import Dataset, DataLoader
+from PIL import Image
+from torchvision import transforms
 
 # Ignore warnings
 import warnings
@@ -25,33 +27,33 @@ class CovidLandmarksDataset(Dataset):
             idx = idx.tolist()
 
         img_name = os.path.join(self.root_dir, self.landmarks_frame.iloc[idx, 2])
-        image = io.imread(img_name)
-        
+        image = Image.open(img_name).convert('L')
+        image = transforms.ToTensor()(image)
         # One Hot Labels
         labels = self.landmarks_frame.iloc[idx, 1]
         labels = labels.split('|')
 
         gt_label = np.zeros((15),np.float32)
         classes = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion','Emphysema',
-        			'Fibrosis','Hernia', 'Infiltration', 'Mass', 'Nodule', 'Pleural_Thickening', 'Pneumonia',
- 					'Pneumothorax', 'COVID-19']
+                   'Fibrosis','Hernia', 'Infiltration', 'Mass', 'Nodule', 'Pleural_Thickening', 'Pneumonia',
+                   'Pneumothorax', 'COVID-19']
         for i in range(15):
-        	for j in labels:
-	            if j == classes[i]:
-	                gt_label[i] = 1.0
+            for j in labels:
+                if j == classes[i]:
+                    gt_label[i] = 1.0
         
-	     # Sample
-
+        # Sample
         sample = {'image': image, 'gt_label': gt_label}
 
         return sample
 
-Covid_dataset = CovidLandmarksDataset(csv_file='./final-dataset/metadata.csv',
+if __name__ == '__main__':
+    Covid_dataset = CovidLandmarksDataset(csv_file='./final-dataset/metadata.csv',
                                            root_dir='./final-dataset/images/')
 
-dataloader = DataLoader(Covid_dataset, batch_size=1,
-                        shuffle=True, num_workers=2)
+    dataloader = DataLoader(Covid_dataset, batch_size=1,
+                            shuffle=True, num_workers=2)
 
-for i_batch, sample_batched in enumerate(dataloader):
-    print(i_batch, sample_batched['image'].size(),
-          sample_batched['gt_label'])
+    for i_batch, sample_batched in enumerate(dataloader):
+        print(i_batch, sample_batched['image'].size(),
+              sample_batched['gt_label'])
