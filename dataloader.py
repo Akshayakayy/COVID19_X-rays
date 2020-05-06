@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 from torchvision import transforms
+import torchxrayvision as xrv
 
 # Ignore warnings
 import warnings
@@ -29,7 +30,11 @@ class CovidLandmarksDataset(Dataset):
 
         img_name = os.path.join(self.root_dir, self.landmarks_frame.iloc[idx, 2])
         image = Image.open(img_name).convert('L')
+
+        image = transforms.Resize(28, interpolation=2)(image)
         image = transforms.ToTensor()(image)
+        image = transforms.Normalize((.5,), (.5,))(image)
+
         # One Hot Labels
         labels = self.landmarks_frame.iloc[idx, 1]
         labels = labels.split('|')
